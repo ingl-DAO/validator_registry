@@ -1,0 +1,27 @@
+[package]
+name = "ingl_validator_registry"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+solana-program = "1.13.5"
+borsh = "0.9.3"
+
+[profile.release]
+overflow-checks = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[package.metadata.x]
+deploy-pubkey = "solana-keygen pubkey ./deploy/keypair.json"
+new-deploy-address = "solana-keygen new -o ./deploy/keypair.json --no-bip39-passphrase --force"
+
+build-deploy-address = "cargo build-bpf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u devnet"
+build-deploy-address-testnet = "cargo build-bpf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u testnet"
+build-deploy-address-local = "cargo build-bpf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u localhost"
+
+bda = "cargo-x build-deploy-address"
+nda = "cargo-x new-deploy-address"
