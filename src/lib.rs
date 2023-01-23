@@ -23,6 +23,7 @@ pub enum InstructionEnum {
     InitConfig,
     AddProgram,
     RemovePrograms { program_count: u8 },
+    Reset,
     Blank,
 }
 impl InstructionEnum {
@@ -129,7 +130,7 @@ pub fn process_instruction(
                 &system_instruction::transfer(
                     payer_account_info.key,
                     team_account_info.key,
-                    constants::SPAM_PREVENTION_SOL,
+                    constants::PROGRAM_DEPLOYMENT_PAYBACK,
                 ),
                 &[payer_account_info.clone(), team_account_info.clone()],
             )?;
@@ -160,7 +161,6 @@ pub fn process_instruction(
                 .error_log("Error @ config account data serialization")?;
             Ok(())
         }
-
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }

@@ -15,7 +15,7 @@ pub mod constants {
 
     pub const MAX_PROGRAMS_PER_STORAGE_ACCOUNT: u32 = 625;
 
-    pub const SPAM_PREVENTION_SOL: u64 = 1_000_000_000;
+    pub const PROGRAM_DEPLOYMENT_PAYBACK: u64 = 1_000_000_000;
 
     pub mod team {
         solana_program::declare_id!("Team111111111111111111111111111111111111111");
