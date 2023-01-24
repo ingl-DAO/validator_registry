@@ -15,7 +15,7 @@ use solana_program::{
     system_instruction,
     sysvar::Sysvar,
 };
-use solana_program::{bpf_loader_upgradeable, entrypoint, msg};
+use solana_program::{bpf_loader_upgradeable, entrypoint, msg, system_program};
 use utils::AccountInfoHelpers;
 
 #[derive(BorshSerialize, BorshDeserialize)]
@@ -95,7 +95,9 @@ pub fn process_instruction(
             let (_storage_key, storage_bump) = storage_account
                 .assert_seed(program_id, &[b"storage", &storage_numeration.to_be_bytes()])
                 .error_log("Error @ storage_account assertion")?;
-            if config.validator_numeration % constants::MAX_PROGRAMS_PER_STORAGE_ACCOUNT == 0 {
+            if config.validator_numeration % constants::MAX_PROGRAMS_PER_STORAGE_ACCOUNT == 0
+                && storage_account.owner == &system_program::id()
+            {
                 let storage_data = Storage::default();
                 msg!("Creating new storage account");
                 invoke_signed(
@@ -137,21 +139,23 @@ pub fn process_instruction(
             msg!("Transferred Spam prevention Sol");
 
             msg!("transferring Reallocing Storage account");
-            let transfer_lamports =
-                Rent::get()?.minimum_balance(storage_data.get_space()) - storage_account.lamports();
-
-            invoke(
-                &system_instruction::transfer(
-                    payer_account_info.key,
-                    storage_account.key,
-                    transfer_lamports,
-                ),
-                &[payer_account_info.clone(), storage_account.clone()],
-            )?;
-            msg!("Reallocated Storage account");
-            storage_account
-                .realloc(storage_data.get_space(), true)
-                .error_log("Error @ Reallocation of storage data")?;
+            let transfer_lamports: i128 = Rent::get()?.minimum_balance(storage_data.get_space())
+                as i128
+                - storage_account.lamports() as i128;
+            if transfer_lamports > 0 {
+                invoke(
+                    &system_instruction::transfer(
+                        payer_account_info.key,
+                        storage_account.key,
+                        transfer_lamports as u64,
+                    ),
+                    &[payer_account_info.clone(), storage_account.clone()],
+                )?;
+                msg!("Reallocated Storage account");
+                storage_account
+                    .realloc(storage_data.get_space(), true)
+                    .error_log("Error @ Reallocation of storage data")?;
+            }
             storage_data
                 .serialize(&mut &mut storage_account.data.borrow_mut()[..])
                 .error_log("Error @ storage data serialization")?;
@@ -161,6 +165,38 @@ pub fn process_instruction(
                 .error_log("Error @ config account data serialization")?;
             Ok(())
         }
+
+        InstructionEnum::Reset => {
+            let account_info_iter = &mut accounts.iter();
+            let _payer_account_info = next_account_info(account_info_iter)?;
+            let config_account = next_account_info(account_info_iter)?;
+            let (_config_key, _config_bump) =
+                config_account.assert_seed(program_id, &[b"config"])?;
+            config_account.assert_owner(program_id)?;
+            let mut config = Config::decode(config_account);
+            let storage_account = next_account_info(account_info_iter)?;
+            let storage_numeration = config
+                .validator_numeration
+                .checked_div(constants::MAX_PROGRAMS_PER_STORAGE_ACCOUNT)
+                .unwrap();
+            msg!("storage_numeration: {}", storage_numeration);
+            let (_storage_key, _storage_bump) = storage_account
+                .assert_seed(program_id, &[b"storage", &storage_numeration.to_be_bytes()])
+                .error_log("Error @ storage_account assertion")?;
+
+            let storage_data = Storage::default();
+            config.validator_numeration -=
+                config.validator_numeration % constants::MAX_PROGRAMS_PER_STORAGE_ACCOUNT;
+
+            storage_data
+                .serialize(&mut &mut storage_account.data.borrow_mut()[..])
+                .error_log("Error @ first storage serialization")?;
+            config
+                .serialize(&mut &mut config_account.data.borrow_mut()[..])
+                .error_log("Error @ config account data serialization")?;
+            Ok(())
+        }
+
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }

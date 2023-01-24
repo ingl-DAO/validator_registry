@@ -80,7 +80,7 @@ impl Storage {
             .assert_owner(&constants::ID)
             .error_log("Inputed storage account is not owned by the program")
             .unwrap();
-        let storage = Storage::try_from_slice(&account.data.borrow())
+        let storage: Storage = try_from_slice_unchecked(&account.data.borrow())
             .error_log("Error at storage account try_from_slice")
             .unwrap();
         if storage.validation_phase == constants::STORAGE_VALIDATION_PHASE {
