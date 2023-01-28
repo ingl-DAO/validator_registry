@@ -1,6 +1,8 @@
+use std::collections::BTreeSet;
+
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
-    account_info::AccountInfo, borsh::try_from_slice_unchecked, program_error::ProgramError,
+    account_info::AccountInfo, borsh::try_from_slice_unchecked, msg, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
@@ -12,8 +14,10 @@ pub mod constants {
 
     pub const CONFIG_VALIDATION_PHASE: u32 = 373_836_823;
     pub const STORAGE_VALIDATION_PHASE: u32 = 332_049_381;
+    pub const NAME_STORAGE_VALIDATION_PHASE: u32 = 938_283_942;
 
     pub const MAX_PROGRAMS_PER_STORAGE_ACCOUNT: u32 = 625;
+    pub const MAX_PROGRAMS_PER_NAME_STORAGE_ACCOUNT: u32 = 1666;
 
     pub const PROGRAM_DEPLOYMENT_PAYBACK: u64 = 1_000_000_000;
 
@@ -116,5 +120,59 @@ impl Storage {
         self.programs.remove(index);
         self.verify()?;
         Ok(())
+    }
+}
+
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct NameStorage {
+    pub validation_phase: u32,
+    pub names: BTreeSet<String>,
+}
+
+impl Default for NameStorage {
+    fn default() -> Self {
+        Self {
+            validation_phase: constants::NAME_STORAGE_VALIDATION_PHASE,
+            names: BTreeSet::new(),
+        }
+    }
+}
+impl NameStorage {
+    pub fn add_name(&mut self, name: &String) -> Result<(), ProgramError> {
+        let tmp_name = name.clone().to_lowercase();
+        Self::validate_name(name)?;
+        if self.names.contains(&tmp_name) {
+            msg!("Error: @ name already exists assertion.");
+            Err(ProgramError::Custom(1))?
+        }
+        self.names.insert(tmp_name);
+        Ok(())
+    }
+
+    pub fn validate_name(name: &String) -> Result<(), ProgramError> {
+        if name.len() > 12 {
+            msg!("Error: @ name length assertion.");
+            Err(ProgramError::Custom(2))?
+        }
+        if name.chars().all(|c| c.is_ascii_alphanumeric()) {
+            msg!("Error: @ name alphanumeric assertion.");
+            Err(ProgramError::Custom(3))?
+        }
+        Ok(())
+    }
+
+    pub fn decode(account: &AccountInfo) -> Self {
+        account
+            .assert_owner(&constants::ID)
+            .error_log("Inputed name storage account is not owned by the program")
+            .unwrap();
+        let name_storage: NameStorage = try_from_slice_unchecked(&account.data.borrow())
+            .error_log("Error at name storage account try_from_slice")
+            .unwrap();
+        if name_storage.validation_phase == constants::NAME_STORAGE_VALIDATION_PHASE {
+            name_storage
+        } else {
+            panic!("Error: @ name storage validation phase assertion.");
+        }
     }
 }

@@ -1,7 +1,7 @@
 pub mod state;
 pub mod utils;
 use crate::state::constants::team;
-use crate::state::{constants, Config, Storage};
+use crate::state::{constants, Config, Storage, NameStorage};
 use crate::utils::ResultExt;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::program::invoke;
@@ -21,7 +21,7 @@ use utils::AccountInfoHelpers;
 #[derive(BorshSerialize, BorshDeserialize)]
 pub enum InstructionEnum {
     InitConfig,
-    AddProgram,
+    AddProgram { name: String },
     RemovePrograms { program_count: u8 },
     Reset,
     Blank,
@@ -64,7 +64,7 @@ pub fn process_instruction(
             config_data.serialize(&mut &mut config_account.data.borrow_mut()[..])?;
             Ok(())
         }
-        InstructionEnum::AddProgram => {
+        InstructionEnum::AddProgram { mut name } => {
             let account_info_iter = &mut accounts.iter();
             let payer_account_info = next_account_info(account_info_iter)?;
             let config_account = next_account_info(account_info_iter)?;
@@ -77,7 +77,6 @@ pub fn process_instruction(
             team_account_info
                 .assert_key_match(&team::id())
                 .error_log("Error @ team_account_info assertion")?;
-
             let (_config_key, _config_bump) =
                 config_account.assert_seed(program_id, &[b"config"])?;
             config_account.assert_owner(program_id)?;
@@ -92,6 +91,54 @@ pub fn process_instruction(
                 )
                 .unwrap();
             msg!("storage_numeration: {}", storage_numeration);
+
+            let name_storage_numeration = config
+                .validator_numeration
+                .checked_div(constants::MAX_PROGRAMS_PER_NAME_STORAGE_ACCOUNT.into())
+                .unwrap();
+            for ind in 0..name_storage_numeration + 1 {
+                let current_name_storage_account = next_account_info(account_info_iter)?;
+                let (_current_name_storage_key, current_name_storage_bump) = current_name_storage_account
+                    .assert_seed(program_id, &[b"name_storage", &ind.to_be_bytes()])
+                    .error_log("Error @ name_storage assertion")?;
+
+                if config.validator_numeration % constants::MAX_PROGRAMS_PER_NAME_STORAGE_ACCOUNT == 0 && current_name_storage_account.owner == &system_program::id() {
+                    let name_storage_data = Storage::default();
+                    msg!("Creating new name storage account");
+                    invoke_signed(
+                        &system_instruction::create_account(
+                            payer_account_info.key,
+                            current_name_storage_account.key,
+                            Rent::get()?.minimum_balance(name_storage_data.get_space()),
+                            name_storage_data.get_space() as u64,
+                            program_id,
+                        ),
+                        &[payer_account_info.clone(), current_name_storage_account.clone()],
+                        &[&[
+                            b"name_storage",
+                            &ind.to_be_bytes(),
+                            &[current_name_storage_bump],
+                        ]],
+                    )?;
+                    name_storage_data.serialize(&mut &mut current_name_storage_account.data.borrow_mut()[..])?;
+                }
+
+                let mut name_storage = NameStorage::decode(current_name_storage_account);
+                
+                if name_storage.names.contains(&name){
+                    msg!("Name already exists");
+                    return Err(ProgramError::InvalidArgument);
+                }
+
+                if ind == name_storage_numeration {
+                    name_storage.add_name(&name).error_log("Error @ name_storage.add_name")?;
+                    name_storage.serialize(&mut &mut current_name_storage_account.data.borrow_mut()[..]).error_log("Error @ name_storage.serialize")?;
+                }
+
+
+                
+            }
+
             let (_storage_key, storage_bump) = storage_account
                 .assert_seed(program_id, &[b"storage", &storage_numeration.to_be_bytes()])
                 .error_log("Error @ storage_account assertion")?;
