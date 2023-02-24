@@ -154,11 +154,19 @@ impl NameStorage {
             msg!("Error: @ name length assertion.");
             Err(ProgramError::Custom(2))?
         }
-        if name.chars().all(|c| c.is_ascii_alphanumeric()) {
+        if !name.chars().all(|c| c.is_ascii_alphanumeric()) {
             msg!("Error: @ name alphanumeric assertion.");
             Err(ProgramError::Custom(3))?
         }
         Ok(())
+    }
+
+    pub fn get_space(&self) -> usize {
+        let mut str_lens = 0;
+        for name in self.names.iter() {
+            str_lens += name.len() + 4;
+        }
+        4 + 4 + str_lens
     }
 
     pub fn decode(account: &AccountInfo) -> Self {

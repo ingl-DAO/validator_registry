@@ -19,9 +19,9 @@ crate-type = ["cdylib", "lib"]
 deploy-pubkey = "solana-keygen pubkey ./deploy/keypair.json"
 new-deploy-address = "solana-keygen new -o ./deploy/keypair.json --no-bip39-passphrase --force"
 
-build-deploy-address = "cargo build-bpf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u devnet"
-build-deploy-address-testnet = "cargo build-bpf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u testnet"
-build-deploy-address-local = "cargo build-bpf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u localhost"
+build-deploy-address = "cargo build-sbf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u devnet"
+build-deploy-address-testnet = "cargo build-sbf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u testnet"
+build-deploy-address-local = "cargo build-sbf && solana program deploy --program-id ./deploy/keypair.json ./target/deploy/ingl_validator_registry.so -u localhost"
 
 bda = "cargo-x build-deploy-address"
 nda = "cargo-x new-deploy-address"
