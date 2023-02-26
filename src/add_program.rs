@@ -82,11 +82,6 @@ pub fn add_program(program_id: &Pubkey, accounts: &[AccountInfo], name: String) 
 
         let mut name_storage = NameStorage::decode(current_name_storage_account);
 
-        if name_storage.names.contains(&name) {
-            msg!("Name already exists");
-            return Err(ProgramError::InvalidArgument);
-        }
-
         if ind == name_storage_numeration {
             name_storage
                 .add_name(&name)
