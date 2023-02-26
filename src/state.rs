@@ -138,25 +138,26 @@ impl Default for NameStorage {
     }
 }
 impl NameStorage {
-    pub fn add_name(&mut self, name: &String) -> Result<(), ProgramError> {
-        let tmp_name = name.clone().to_lowercase();
-        Self::validate_name(name)?;
+    pub fn add_name(&mut self, name: &str) -> Result<(), ProgramError> {
+        let mut tmp_name = String::new();
+        for char in name.chars() {
+            if char.is_ascii_alphanumeric() {
+                tmp_name.push(char.to_ascii_lowercase());
+            }
+        }
+        Self::validate_name(&tmp_name)?;
         if self.names.contains(&tmp_name) {
-            msg!("Error: @ name already exists assertion.");
+            msg!("Error: @ name is too similar to an existing name.");
             Err(ProgramError::Custom(1))?
         }
         self.names.insert(tmp_name);
         Ok(())
     }
 
-    pub fn validate_name(name: &String) -> Result<(), ProgramError> {
-        if name.len() > 12 {
+    pub fn validate_name(name: &str) -> Result<(), ProgramError> {
+        if name.len() > 12 || name.len() < 1 {
             msg!("Error: @ name length assertion.");
             Err(ProgramError::Custom(2))?
-        }
-        if !name.chars().all(|c| c.is_ascii_alphanumeric()) {
-            msg!("Error: @ name alphanumeric assertion.");
-            Err(ProgramError::Custom(3))?
         }
         Ok(())
     }
