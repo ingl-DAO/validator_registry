@@ -2,7 +2,7 @@ pub mod add_program;
 pub mod state;
 pub mod utils;
 use crate::add_program::add_program;
-use crate::state::{constants, Config, Storage};
+use crate::state::{constants, Config, NameStorage, Storage};
 use crate::utils::ResultExt;
 use borsh::{BorshDeserialize, BorshSerialize};
 
@@ -37,6 +37,7 @@ impl InstructionEnum {
 entrypoint!(process_instruction);
 
 pub fn process_instruction(
+    //TODO: use slicing for storage account storing and fetching.
     program_id: &Pubkey,
     accounts: &[AccountInfo],
     input: &[u8],
@@ -79,18 +80,38 @@ pub fn process_instruction(
             config_account.assert_owner(program_id)?;
             let mut config = Config::decode(config_account);
             let storage_account = next_account_info(account_info_iter)?;
+            let name_storage_account = next_account_info(account_info_iter)?;
             let storage_numeration = config
                 .validator_numeration
                 .checked_div(constants::MAX_PROGRAMS_PER_STORAGE_ACCOUNT)
                 .unwrap();
+
+            let name_storage_numeration = config
+                .validator_numeration
+                .checked_div(constants::MAX_PROGRAMS_PER_NAME_STORAGE_ACCOUNT)
+                .unwrap();
+
             msg!("storage_numeration: {}", storage_numeration);
             let (_storage_key, _storage_bump) = storage_account
                 .assert_seed(program_id, &[b"storage", &storage_numeration.to_be_bytes()])
                 .error_log("Error @ storage_account assertion")?;
 
+            let (_name_storage_key, _name_storage_bump) = name_storage_account
+                .assert_seed(
+                    program_id,
+                    &[b"name_storage", &name_storage_numeration.to_be_bytes()],
+                )
+                .error_log("Error @ name_storage_account assertion")?;
+
+            let name_storage_data = NameStorage::default();
+
             let storage_data = Storage::default();
             config.validator_numeration -=
                 config.validator_numeration % constants::MAX_PROGRAMS_PER_STORAGE_ACCOUNT;
+
+            name_storage_data
+                .serialize(&mut &mut name_storage_account.data.borrow_mut()[..])
+                .error_log("Error @ first name storage serialization")?;
 
             storage_data
                 .serialize(&mut &mut storage_account.data.borrow_mut()[..])
