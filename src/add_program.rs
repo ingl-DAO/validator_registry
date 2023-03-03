@@ -60,7 +60,9 @@ pub fn add_permissionless_validator_program(
             &[payer_account_info.clone(), name_storage_account.clone()],
             &[&[b"name_storage", &[name_storage_bump]]],
         )?;
-        name_storage_data.serialize(&mut &mut name_storage_account.data.borrow_mut()[..])?;
+        name_storage_data.serialize(
+            &mut &mut name_storage_account.data.borrow_mut()[..NameStorage::get_init_space()],
+        )?;
     }
 
     let mut name_storage = NameStorage::decode(name_storage_account);
@@ -103,7 +105,7 @@ pub fn add_permissionless_validator_program(
         )?;
         msg!("Created new storage account");
         storage_data
-            .serialize(&mut &mut storage_account.data.borrow_mut()[..])
+            .serialize(&mut &mut storage_account.data.borrow_mut()[..Storage::get_init_space()])
             .error_log("Error @ first storage serialization")?;
     }
     msg!("adding program to storage");
@@ -143,10 +145,12 @@ pub fn add_permissionless_validator_program(
     msg!("Transferred Spam prevention Sol");
 
     name_storage
-        .serialize(&mut &mut name_storage_account.data.borrow_mut()[..])
+        .serialize(
+            &mut &mut name_storage_account.data.borrow_mut()[..NameStorage::get_init_space()],
+        )
         .error_log("Error @ name_storage.serialize")?;
     storage_data
-        .serialize(&mut &mut storage_account.data.borrow_mut()[..])
+        .serialize(&mut &mut storage_account.data.borrow_mut()[..Storage::get_init_space()])
         .error_log("Error @ storage data serialization")?;
     config.validator_numeration += 1;
     config
@@ -195,7 +199,7 @@ pub fn add_marketplace_program(program_id: &Pubkey, accounts: &[AccountInfo]) ->
         )?;
         msg!("Created new storage account");
         storage_data
-            .serialize(&mut &mut storage_account.data.borrow_mut()[..])
+            .serialize(&mut &mut storage_account.data.borrow_mut()[..Storage::get_init_space()])
             .error_log("Error @ first storage serialization")?;
     }
     msg!("adding program to storage");
@@ -234,7 +238,7 @@ pub fn add_marketplace_program(program_id: &Pubkey, accounts: &[AccountInfo]) ->
     msg!("Transferred Spam prevention Sol");
 
     storage_data
-        .serialize(&mut &mut storage_account.data.borrow_mut()[..])
+        .serialize(&mut &mut storage_account.data.borrow_mut()[..Storage::get_init_space()])
         .error_log("Error @ storage data serialization")?;
     config.validator_numeration += 1;
     config
