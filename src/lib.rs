@@ -1,11 +1,12 @@
 pub mod add_program;
 pub mod state;
 pub mod utils;
-use crate::add_program::add_program;
+use crate::add_program::add_permissionless_validator_program;
 use crate::state::{constants, Config, NameStorage, Storage};
 use crate::utils::ResultExt;
 use borsh::{BorshDeserialize, BorshSerialize};
 
+use solana_program::entrypoint;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -16,14 +17,14 @@ use solana_program::{
     system_instruction,
     sysvar::Sysvar,
 };
-use solana_program::{entrypoint, msg};
 use utils::AccountInfoHelpers;
 
 #[derive(BorshSerialize, BorshDeserialize)]
 pub enum InstructionEnum {
     InitConfig,
-    AddProgram { name: String },
+    AddValidatorProgram { name: String },
     RemovePrograms { program_count: u8 },
+    AddMarketplaceProgram { name: String },
     Reset,
     Blank,
 }
@@ -66,8 +67,8 @@ pub fn process_instruction(
             config_data.serialize(&mut &mut config_account.data.borrow_mut()[..])?;
             Ok(())
         }
-        InstructionEnum::AddProgram { name } => {
-            add_program(program_id, accounts, name)?;
+        InstructionEnum::AddValidatorProgram { name } => {
+            add_permissionless_validator_program(program_id, accounts, name)?;
             Ok(())
         }
 
@@ -81,33 +82,20 @@ pub fn process_instruction(
             let mut config = Config::decode(config_account);
             let storage_account = next_account_info(account_info_iter)?;
             let name_storage_account = next_account_info(account_info_iter)?;
-            let storage_numeration = config
-                .validator_numeration
-                .checked_div(constants::MAX_PROGRAMS_PER_STORAGE_ACCOUNT)
-                .unwrap();
 
-            let name_storage_numeration = config
-                .validator_numeration
-                .checked_div(constants::MAX_PROGRAMS_PER_NAME_STORAGE_ACCOUNT)
-                .unwrap();
-
-            msg!("storage_numeration: {}", storage_numeration);
             let (_storage_key, _storage_bump) = storage_account
-                .assert_seed(program_id, &[b"storage", &storage_numeration.to_be_bytes()])
+                .assert_seed(program_id, &[b"storage"])
                 .error_log("Error @ storage_account assertion")?;
 
             let (_name_storage_key, _name_storage_bump) = name_storage_account
-                .assert_seed(
-                    program_id,
-                    &[b"name_storage", &name_storage_numeration.to_be_bytes()],
-                )
+                .assert_seed(program_id, &[b"name_storage"])
                 .error_log("Error @ name_storage_account assertion")?;
 
             let name_storage_data = NameStorage::default();
 
             let storage_data = Storage::default();
-            config.validator_numeration -=
-                config.validator_numeration % constants::MAX_PROGRAMS_PER_STORAGE_ACCOUNT;
+
+            config.validator_numeration = 0;
 
             name_storage_data
                 .serialize(&mut &mut name_storage_account.data.borrow_mut()[..])
