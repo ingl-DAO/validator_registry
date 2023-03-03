@@ -1,7 +1,7 @@
 pub mod add_program;
 pub mod state;
 pub mod utils;
-use crate::add_program::add_permissionless_validator_program;
+use crate::add_program::{add_marketplace_program, add_permissionless_validator_program};
 use crate::state::{constants, Config, NameStorage, Storage};
 use crate::utils::ResultExt;
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -24,7 +24,7 @@ pub enum InstructionEnum {
     InitConfig,
     AddValidatorProgram { name: String },
     RemovePrograms { program_count: u8 },
-    AddMarketplaceProgram { name: String },
+    AddMarketplaceProgram,
     Reset,
     Blank,
 }
@@ -65,12 +65,11 @@ pub fn process_instruction(
                 &[&[b"config", &[config_bump]]],
             )?;
             config_data.serialize(&mut &mut config_account.data.borrow_mut()[..])?;
-            Ok(())
         }
         InstructionEnum::AddValidatorProgram { name } => {
-            add_permissionless_validator_program(program_id, accounts, name)?;
-            Ok(())
+            add_permissionless_validator_program(program_id, accounts, name)?
         }
+        InstructionEnum::AddMarketplaceProgram => add_marketplace_program(program_id, accounts)?,
 
         InstructionEnum::Reset => {
             let account_info_iter = &mut accounts.iter();
@@ -107,9 +106,9 @@ pub fn process_instruction(
             config
                 .serialize(&mut &mut config_account.data.borrow_mut()[..])
                 .error_log("Error @ config account data serialization")?;
-            Ok(())
         }
 
-        _ => Err(ProgramError::InvalidInstructionData),
+        _ => Err(ProgramError::InvalidInstructionData)?,
     }
+    Ok(())
 }
