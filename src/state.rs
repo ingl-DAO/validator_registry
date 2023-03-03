@@ -26,39 +26,39 @@ pub mod constants {
     }
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct Config {
-    pub validation_phrase: u32,
-    pub validator_numeration: u32,
-}
+// #[derive(BorshDeserialize, BorshSerialize)]
+// pub struct Config {
+//     pub validation_phrase: u32,
+//     pub validator_numeration: u32,
+// }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            validation_phrase: constants::CONFIG_VALIDATION_PHRASE,
-            validator_numeration: 0,
-        }
-    }
-}
-impl Config {
-    pub fn decode(account: &AccountInfo) -> Self {
-        account
-            .assert_owner(&constants::ID)
-            .error_log("Inputed config account is not owned by the program")
-            .unwrap();
-        let config: Self = try_from_slice_unchecked(&account.data.borrow())
-            .error_log("Error at config account try_from_slice")
-            .unwrap();
-        if config.validation_phrase == constants::CONFIG_VALIDATION_PHRASE {
-            config
-        } else {
-            panic!("Error: @ config validation phrase assertion.");
-        }
-    }
-    pub fn get_space(&self) -> usize {
-        8
-    }
-}
+// impl Default for Config {
+//     fn default() -> Self {
+//         Self {
+//             validation_phrase: constants::CONFIG_VALIDATION_PHRASE,
+//             validator_numeration: 0,
+//         }
+//     }
+// }
+// impl Config {
+//     pub fn decode(account: &AccountInfo) -> Self {
+//         account
+//             .assert_owner(&constants::ID)
+//             .error_log("Inputed config account is not owned by the program")
+//             .unwrap();
+//         let config: Self = try_from_slice_unchecked(&account.data.borrow())
+//             .error_log("Error at config account try_from_slice")
+//             .unwrap();
+//         if config.validation_phrase == constants::CONFIG_VALIDATION_PHRASE {
+//             config
+//         } else {
+//             panic!("Error: @ config validation phrase assertion.");
+//         }
+//     }
+//     pub fn get_space(&self) -> usize {
+//         8
+//     }
+// }
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Storage {

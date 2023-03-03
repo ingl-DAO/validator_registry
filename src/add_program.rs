@@ -1,7 +1,7 @@
 use borsh::BorshSerialize;
 
 use crate::state::constants::{team, MAX_NAME_LENGTH};
-use crate::state::{constants, Config, NameStorage, Storage};
+use crate::state::{constants, NameStorage, Storage};
 use crate::utils::{AccountInfoHelpers, ResultExt};
 use solana_program::program::invoke;
 use solana_program::{
@@ -22,11 +22,11 @@ pub fn add_permissionless_validator_program(
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let payer_account_info = next_account_info(account_info_iter)?;
-    let config_account = next_account_info(account_info_iter)?;
     let registered_program_account = next_account_info(account_info_iter)?;
     let team_account_info = next_account_info(account_info_iter)?;
     let storage_account = next_account_info(account_info_iter)?;
     let name_storage_account = next_account_info(account_info_iter)?;
+    // let config_account = next_account_info(account_info_iter)?;
 
     registered_program_account
         .assert_owner(&bpf_loader_upgradeable::id())
@@ -42,9 +42,9 @@ pub fn add_permissionless_validator_program(
     let (_name_storage_key, name_storage_bump) =
         name_storage_account.assert_seed(program_id, &[b"name_storage"])?;
 
-    let (_config_key, _config_bump) = config_account.assert_seed(program_id, &[b"config"])?;
-    config_account.assert_owner(program_id)?;
-    let mut config = Config::decode(config_account);
+    // let (_config_key, _config_bump) = config_account.assert_seed(program_id, &[b"config"])?;
+    // config_account.assert_owner(program_id)?;
+    // let mut config = Config::decode(config_account);
 
     if name_storage_account.owner == &system_program::id() {
         let name_storage_data = NameStorage::default();
@@ -152,20 +152,20 @@ pub fn add_permissionless_validator_program(
     storage_data
         .serialize(&mut &mut storage_account.data.borrow_mut()[..Storage::get_init_space()])
         .error_log("Error @ storage data serialization")?;
-    config.validator_numeration += 1;
-    config
-        .serialize(&mut &mut config_account.data.borrow_mut()[..])
-        .error_log("Error @ config account data serialization")?;
+    // config.validator_numeration += 1;
+    // config
+    //     .serialize(&mut &mut config_account.data.borrow_mut()[..])
+    //     .error_log("Error @ config account data serialization")?;
     Ok(())
 }
 
 pub fn add_marketplace_program(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let payer_account_info = next_account_info(account_info_iter)?;
-    let config_account = next_account_info(account_info_iter)?;
     let registered_program_account = next_account_info(account_info_iter)?;
     let team_account_info = next_account_info(account_info_iter)?;
     let storage_account = next_account_info(account_info_iter)?;
+    // let config_account = next_account_info(account_info_iter)?;
 
     registered_program_account
         .assert_owner(&bpf_loader_upgradeable::id())
@@ -179,9 +179,9 @@ pub fn add_marketplace_program(program_id: &Pubkey, accounts: &[AccountInfo]) ->
         .assert_seed(program_id, &[b"storage"])
         .error_log("Error @ storage_account assertion")?;
 
-    let (_config_key, _config_bump) = config_account.assert_seed(program_id, &[b"config"])?;
-    config_account.assert_owner(program_id)?;
-    let mut config = Config::decode(config_account);
+    // let (_config_key, _config_bump) = config_account.assert_seed(program_id, &[b"config"])?;
+    // config_account.assert_owner(program_id)?;
+    // let mut config = Config::decode(config_account);
 
     if storage_account.owner == &system_program::id() {
         let storage_data = Storage::default();
@@ -240,9 +240,9 @@ pub fn add_marketplace_program(program_id: &Pubkey, accounts: &[AccountInfo]) ->
     storage_data
         .serialize(&mut &mut storage_account.data.borrow_mut()[..Storage::get_init_space()])
         .error_log("Error @ storage data serialization")?;
-    config.validator_numeration += 1;
-    config
-        .serialize(&mut &mut config_account.data.borrow_mut()[..])
-        .error_log("Error @ config account data serialization")?;
+    // config.validator_numeration += 1;
+    // config
+    //     .serialize(&mut &mut config_account.data.borrow_mut()[..])
+    //     .error_log("Error @ config account data serialization")?;
     Ok(())
 }
