@@ -12,8 +12,8 @@ pub mod constants {
     use solana_program::declare_id;
     declare_id!("38pfsot7kCZkrttx1THEDXEz4JJXmCCcaDoDieRtVuy5");
 
-    pub const CONFIG_VALIDATION_PHASE: u32 = 373_836_823;
-    pub const STORAGE_VALIDATION_PHASE: u32 = 332_049_381;
+    pub const CONFIG_VALIDATION_PHRASE: u32 = 373_836_823;
+    pub const STORAGE_VALIDATION_PHRASE: u32 = 332_049_381;
     pub const NAME_STORAGE_VALIDATION_PHRASE: u32 = 938_283_942;
     pub const MARKETPLACE_STORAGE_VALIDATION_PHRASE: u32 = 728_721_427;
 
@@ -28,14 +28,14 @@ pub mod constants {
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Config {
-    pub validation_phase: u32,
+    pub validation_phrase: u32,
     pub validator_numeration: u32,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            validation_phase: constants::CONFIG_VALIDATION_PHASE,
+            validation_phrase: constants::CONFIG_VALIDATION_PHRASE,
             validator_numeration: 0,
         }
     }
@@ -49,10 +49,10 @@ impl Config {
         let config: Self = try_from_slice_unchecked(&account.data.borrow())
             .error_log("Error at config account try_from_slice")
             .unwrap();
-        if config.validation_phase == constants::CONFIG_VALIDATION_PHASE {
+        if config.validation_phrase == constants::CONFIG_VALIDATION_PHRASE {
             config
         } else {
-            panic!("Error: @ config validation phase assertion.");
+            panic!("Error: @ config validation phrase assertion.");
         }
     }
     pub fn get_space(&self) -> usize {
@@ -62,14 +62,14 @@ impl Config {
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Storage {
-    pub validation_phase: u32,
+    pub validation_phrase: u32,
     pub num_programs: u32,
     //Programs are stored here like this: [program_id1, program_id2, program_id3, etc...] with each program being 32bytes long.
 }
 impl Default for Storage {
     fn default() -> Self {
         Self {
-            validation_phase: constants::STORAGE_VALIDATION_PHASE,
+            validation_phrase: constants::STORAGE_VALIDATION_PHRASE,
             num_programs: 0,
         }
     }
@@ -83,17 +83,17 @@ impl Storage {
         let storage: Storage = try_from_slice_unchecked(&account.data.borrow())
             .error_log("Error at storage account try_from_slice")
             .unwrap();
-        if storage.validation_phase == constants::STORAGE_VALIDATION_PHASE {
+        if storage.validation_phrase == constants::STORAGE_VALIDATION_PHRASE {
             storage
         } else {
-            panic!("Error: @ storage validation phase assertion.");
+            panic!("Error: @ storage validation phrase assertion.");
         }
     }
     pub fn get_space(&self) -> usize {
         Self::get_init_space() + (self.num_programs as usize * 32)
     }
     pub fn get_init_space() -> usize {
-        8 // 4 bytes for validation_phase and 4 bytes for num_programs
+        8 // 4 bytes for validation_phrase and 4 bytes for num_programs
     }
     pub fn find_program(
         program_id: Pubkey,
@@ -221,21 +221,21 @@ impl NameStorage {
         if name_storage.validation_phrase == constants::NAME_STORAGE_VALIDATION_PHRASE {
             name_storage
         } else {
-            panic!("Error: @ name storage validation phase assertion.");
+            panic!("Error: @ name storage validation phrase assertion.");
         }
     }
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct MarketplaceStorage {
-    pub validation_phase: u32,
+    pub validation_phrase: u32,
     pub num_programs: u32,
     //Programs are stored here like this: [program_id1, program_id2, program_id3, etc...] with each program being 32bytes long.
 }
 impl Default for MarketplaceStorage {
     fn default() -> Self {
         Self {
-            validation_phase: constants::MARKETPLACE_STORAGE_VALIDATION_PHRASE,
+            validation_phrase: constants::MARKETPLACE_STORAGE_VALIDATION_PHRASE,
             num_programs: 0,
         }
     }
@@ -249,17 +249,17 @@ impl MarketplaceStorage {
         let storage: MarketplaceStorage = try_from_slice_unchecked(&account.data.borrow())
             .error_log("Error at storage account try_from_slice")
             .unwrap();
-        if storage.validation_phase == constants::MARKETPLACE_STORAGE_VALIDATION_PHRASE {
+        if storage.validation_phrase == constants::MARKETPLACE_STORAGE_VALIDATION_PHRASE {
             storage
         } else {
-            panic!("Error: @ storage validation phase assertion.");
+            panic!("Error: @ storage validation phrase assertion.");
         }
     }
     pub fn get_space(&self) -> usize {
         Self::get_init_space() + (self.num_programs as usize * 32)
     }
     pub fn get_init_space() -> usize {
-        8 // 4 bytes for validation_phase and 4 bytes for num_programs
+        8 // 4 bytes for validation_phrase and 4 bytes for num_programs
     }
     pub fn find_program(
         program_id: Pubkey,
