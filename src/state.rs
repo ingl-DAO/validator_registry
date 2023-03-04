@@ -17,6 +17,10 @@ pub mod constants {
     pub const NAME_STORAGE_VALIDATION_PHRASE: u32 = 938_283_942;
     pub const MARKETPLACE_STORAGE_VALIDATION_PHRASE: u32 = 728_721_427;
 
+    pub const MARKETPLACE_STORAGE_SEED: &[u8] = b"marketplace_storage";
+    pub const FRACTIONALIZED_VALIDATOR_STORAGE_SEED: &[u8] = b"storage";
+    pub const NAME_STORAGE_SEED: &[u8] = b"name_storage";
+
     pub const MAX_NAME_LENGTH: usize = 12;
 
     pub const PROGRAM_DEPLOYMENT_PAYBACK: u64 = 1_000_000_000;

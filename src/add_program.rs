@@ -1,6 +1,6 @@
 use borsh::BorshSerialize;
 
-use crate::state::constants::{team, MAX_NAME_LENGTH};
+use crate::state::constants::{team, MAX_NAME_LENGTH, MARKETPLACE_STORAGE_SEED, NAME_STORAGE_SEED, FRACTIONALIZED_VALIDATOR_STORAGE_SEED};
 use crate::state::{constants, NameStorage, Storage};
 use crate::utils::{AccountInfoHelpers, ResultExt};
 use solana_program::program::invoke;
@@ -37,10 +37,10 @@ pub fn add_permissionless_validator_program(
         .error_log("Error @ team_account_info assertion")?;
 
     let (_storage_key, storage_bump) = storage_account
-        .assert_seed(program_id, &[b"storage"])
+        .assert_seed(program_id, &[FRACTIONALIZED_VALIDATOR_STORAGE_SEED])
         .error_log("Error @ storage_account assertion")?;
     let (_name_storage_key, name_storage_bump) =
-        name_storage_account.assert_seed(program_id, &[b"name_storage"])?;
+        name_storage_account.assert_seed(program_id, &[NAME_STORAGE_SEED])?;
 
     // let (_config_key, _config_bump) = config_account.assert_seed(program_id, &[b"config"])?;
     // config_account.assert_owner(program_id)?;
@@ -58,7 +58,7 @@ pub fn add_permissionless_validator_program(
                 program_id,
             ),
             &[payer_account_info.clone(), name_storage_account.clone()],
-            &[&[b"name_storage", &[name_storage_bump]]],
+            &[&[NAME_STORAGE_SEED, &[name_storage_bump]]],
         )?;
         name_storage_data.serialize(
             &mut &mut name_storage_account.data.borrow_mut()[..NameStorage::get_init_space()],
@@ -101,7 +101,7 @@ pub fn add_permissionless_validator_program(
                 program_id,
             ),
             &[payer_account_info.clone(), storage_account.clone()],
-            &[&[b"storage", &[storage_bump]]],
+            &[&[FRACTIONALIZED_VALIDATOR_STORAGE_SEED, &[storage_bump]]],
         )?;
         msg!("Created new storage account");
         storage_data
@@ -176,7 +176,7 @@ pub fn add_marketplace_program(program_id: &Pubkey, accounts: &[AccountInfo]) ->
         .error_log("Error @ team_account_info assertion")?;
 
     let (_storage_key, storage_bump) = storage_account
-        .assert_seed(program_id, &[b"storage"])
+        .assert_seed(program_id, &[MARKETPLACE_STORAGE_SEED])
         .error_log("Error @ storage_account assertion")?;
 
     // let (_config_key, _config_bump) = config_account.assert_seed(program_id, &[b"config"])?;
@@ -195,7 +195,7 @@ pub fn add_marketplace_program(program_id: &Pubkey, accounts: &[AccountInfo]) ->
                 program_id,
             ),
             &[payer_account_info.clone(), storage_account.clone()],
-            &[&[b"storage", &[storage_bump]]],
+            &[&[MARKETPLACE_STORAGE_SEED, &[storage_bump]]],
         )?;
         msg!("Created new storage account");
         storage_data
