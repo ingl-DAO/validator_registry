@@ -1,18 +1,19 @@
 pub mod add_program;
 pub mod state;
 pub mod utils;
+
 use crate::add_program::{add_marketplace_program, add_permissionless_validator_program};
 use crate::state::{constants, NameStorage, Storage};
 use crate::utils::ResultExt;
 use borsh::{BorshDeserialize, BorshSerialize};
 
-use solana_program::entrypoint;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
     program_error::ProgramError,
     pubkey::Pubkey,
 };
+use solana_program::{entrypoint, msg};
 use utils::AccountInfoHelpers;
 
 #[derive(BorshSerialize, BorshDeserialize)]
@@ -72,11 +73,6 @@ pub fn process_instruction(
             let _payer_account_info = next_account_info(account_info_iter)?;
             let storage_account = next_account_info(account_info_iter)?;
             let name_storage_account = next_account_info(account_info_iter)?;
-            // let config_account = next_account_info(account_info_iter)?;
-            // let (_config_key, _config_bump) =
-            //     config_account.assert_seed(program_id, &[b"config"])?;
-            // config_account.assert_owner(program_id)?;
-            // let mut config = Config::decode(config_account);
 
             let (_storage_key, _storage_bump) = storage_account
                 .assert_seed(program_id, &[b"storage"])
@@ -90,15 +86,21 @@ pub fn process_instruction(
 
             let storage_data = Storage::default();
 
-            // config.validator_numeration = 0;
+            msg!(
+                "Resetting storages, name_storage: {:?}, storage: {:?}",
+                storage_account.data_len(),
+                name_storage_account.data_len(),
+            );
 
-            name_storage_data
-                .serialize(&mut &mut name_storage_account.data.borrow_mut()[..])
-                .error_log("Error @ first name storage serialization")?;
+            // config.validator_numeration = 0;
 
             storage_data
                 .serialize(&mut &mut storage_account.data.borrow_mut()[..])
-                .error_log("Error @ first storage serialization")?;
+                .error_log("Error @ storage serialization")?;
+
+            name_storage_data
+                .serialize(&mut &mut name_storage_account.data.borrow_mut()[..])
+                .error_log("Error @ name storage serialization")?;
             // config
             //     .serialize(&mut &mut config_account.data.borrow_mut()[..])
             //     .error_log("Error @ config account data serialization")?;

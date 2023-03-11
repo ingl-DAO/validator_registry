@@ -26,7 +26,7 @@ pub mod constants {
     pub const PROGRAM_DEPLOYMENT_PAYBACK: u64 = 1_000_000_000;
 
     pub mod team {
-        solana_program::declare_id!("Team111111111111111111111111111111111111111");
+        solana_program::declare_id!("Et2tm6NsfBZJbEYXtWTv9k51V4tWtQvufexSgXoDRGVA");
     }
 }
 
@@ -105,7 +105,7 @@ impl Storage {
         optimistic_index: Option<u32>,
     ) -> Option<u32> {
         let storage = Self::decode(account);
-        let ind = optimistic_index.unwrap_or(storage.num_programs - 1) as i32;
+        let ind = optimistic_index.unwrap_or(storage.num_programs.saturating_sub(1)) as i32;
         let mut cnt = 0;
         while ind - cnt >= 0 {
             let start_ind = Self::get_init_space() + ((ind - cnt) as usize * 32);
@@ -123,7 +123,7 @@ impl Storage {
         program: Pubkey,
         account: &AccountInfo,
     ) -> Result<(), ProgramError> {
-        if let Some(_) = Self::find_program(constants::ID, account, None) {
+        if let Some(_) = Self::find_program(program, account, None) {
             msg!("Error: @ Program already exists in the storage account.");
             Err(ProgramError::Custom(0))?
         }
@@ -172,9 +172,9 @@ impl NameStorage {
         let mut account_data = account.data.borrow_mut();
         let name_start = Self::get_init_space() + (12 * self.num_names as usize);
         let name_end = name_start + MAX_NAME_LENGTH;
+        
         account_data[name_start..name_end].copy_from_slice(tmp_name.as_bytes());
         self.num_names += 1;
-        account_data[name_end..name_end + MAX_NAME_LENGTH].fill(0);
         Ok(())
     }
 
@@ -190,7 +190,8 @@ impl NameStorage {
             return None;
         }
 
-        let optimistic_ind = optimistic_index.unwrap_or(account_struct_data.num_names - 1) as i32;
+        let optimistic_ind =
+            optimistic_index.unwrap_or(account_struct_data.num_names.saturating_sub(1)) as i32;
 
         let mut cnt = 0;
         while optimistic_ind - cnt >= 0 {
@@ -271,7 +272,7 @@ impl MarketplaceStorage {
         optimistic_index: Option<u32>,
     ) -> Option<u32> {
         let storage = Self::decode(account);
-        let ind = optimistic_index.unwrap_or(storage.num_programs - 1) as i32;
+        let ind = optimistic_index.unwrap_or(storage.num_programs.saturating_sub(1)) as i32;
         let mut cnt = 0;
         while ind - cnt >= 0 {
             let start_ind = Self::get_init_space() + ((ind - cnt) as usize * 32);
@@ -289,7 +290,7 @@ impl MarketplaceStorage {
         program: Pubkey,
         account: &AccountInfo,
     ) -> Result<(), ProgramError> {
-        if let Some(_) = Self::find_program(constants::ID, account, None) {
+        if let Some(_) = Self::find_program(program, account, None) {
             msg!("Error: @ Program already exists in the storage account.");
             Err(ProgramError::Custom(0))?
         }

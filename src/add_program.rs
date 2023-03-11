@@ -1,6 +1,9 @@
 use borsh::BorshSerialize;
 
-use crate::state::constants::{team, MAX_NAME_LENGTH, MARKETPLACE_STORAGE_SEED, NAME_STORAGE_SEED, FRACTIONALIZED_VALIDATOR_STORAGE_SEED};
+use crate::state::constants::{
+    team, FRACTIONALIZED_VALIDATOR_STORAGE_SEED, MARKETPLACE_STORAGE_SEED, MAX_NAME_LENGTH,
+    NAME_STORAGE_SEED,
+};
 use crate::state::{constants, NameStorage, Storage};
 use crate::utils::{AccountInfoHelpers, ResultExt};
 use solana_program::program::invoke;
@@ -71,6 +74,7 @@ pub fn add_permissionless_validator_program(
         Rent::get()?.minimum_balance(name_storage.get_space() + MAX_NAME_LENGTH) as i128
             - name_storage_account.lamports() as i128;
     if transfer_lamports > 0 {
+        //TODO: change this from lamports to space allocated.
         invoke(
             &system_instruction::transfer(
                 payer_account_info.key,
@@ -79,10 +83,11 @@ pub fn add_permissionless_validator_program(
             ),
             &[payer_account_info.clone(), name_storage_account.clone()],
         )?;
-        msg!("Reallocated Storage account");
+        msg!("Reallocating name Storage account");
         name_storage_account
             .realloc(name_storage.get_space() + MAX_NAME_LENGTH, false)
             .error_log("Error @ Reallocation of storage data")?;
+        msg!("Reallocated name Storage account");
     }
 
     name_storage
