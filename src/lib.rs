@@ -3,7 +3,8 @@ pub mod state;
 pub mod utils;
 
 use crate::add_program::{add_marketplace_program, add_permissionless_validator_program};
-use crate::state::{constants, NameStorage, Storage};
+use crate::state::constants::MARKETPLACE_STORAGE_SEED;
+use crate::state::{constants, NameStorage, Storage, MarketplaceStorage};
 use crate::utils::ResultExt;
 use borsh::{BorshDeserialize, BorshSerialize};
 
@@ -73,6 +74,7 @@ pub fn process_instruction(
             let _payer_account_info = next_account_info(account_info_iter)?;
             let storage_account = next_account_info(account_info_iter)?;
             let name_storage_account = next_account_info(account_info_iter)?;
+            let marketplace_storage_account = next_account_info(account_info_iter)?;
 
             let (_storage_key, _storage_bump) = storage_account
                 .assert_seed(program_id, &[b"storage"])
@@ -82,14 +84,21 @@ pub fn process_instruction(
                 .assert_seed(program_id, &[b"name_storage"])
                 .error_log("Error @ name_storage_account assertion")?;
 
+            let (_marketplace_storage_key, _marketplace_storage_bump) = marketplace_storage_account
+                .assert_seed(program_id, &[MARKETPLACE_STORAGE_SEED])
+                .error_log("Error @ marketplace_storage_account assertion")?;
+
             let name_storage_data = NameStorage::default();
 
             let storage_data = Storage::default();
 
+            let marketplace_data = MarketplaceStorage::default();
+
             msg!(
-                "Resetting storages, name_storage: {:?}, storage: {:?}",
+                "Resetting storages, name_storage: {:?}, storage: {:?} marketplace_storage: {:?}",
                 storage_account.data_len(),
                 name_storage_account.data_len(),
+                marketplace_storage_account.data_len(),
             );
 
             // config.validator_numeration = 0;
@@ -101,6 +110,10 @@ pub fn process_instruction(
             name_storage_data
                 .serialize(&mut &mut name_storage_account.data.borrow_mut()[..])
                 .error_log("Error @ name storage serialization")?;
+
+            marketplace_data
+                .serialize(&mut &mut marketplace_storage_account.data.borrow_mut()[..])
+                .error_log("Error @ marketplace storage serialization")?;
             // config
             //     .serialize(&mut &mut config_account.data.borrow_mut()[..])
             //     .error_log("Error @ config account data serialization")?;

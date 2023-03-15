@@ -4,7 +4,7 @@ use crate::state::constants::{
     team, FRACTIONALIZED_VALIDATOR_STORAGE_SEED, MARKETPLACE_STORAGE_SEED, MAX_NAME_LENGTH,
     NAME_STORAGE_SEED,
 };
-use crate::state::{constants, NameStorage, Storage};
+use crate::state::{constants, NameStorage, Storage, MarketplaceStorage};
 use crate::utils::{AccountInfoHelpers, ResultExt};
 use solana_program::program::invoke;
 use solana_program::{
@@ -208,7 +208,7 @@ pub fn add_marketplace_program(program_id: &Pubkey, accounts: &[AccountInfo]) ->
             .error_log("Error @ first storage serialization")?;
     }
     msg!("adding program to storage");
-    let mut storage_data = Storage::decode(storage_account);
+    let mut storage_data = MarketplaceStorage::decode(storage_account);
     msg!("transferring Reallocing Storage account");
     let transfer_lamports: i128 = Rent::get()?.minimum_balance(storage_data.get_space() + 32)
         as i128
